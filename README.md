@@ -203,7 +203,7 @@ returned no enumerable findings. Severity uses the OWASP qualitative likelihood 
 
 ### 4.1 PostgreSQL Server — Baseline Posture
 
-- Port scan: only `22/tcp` reachable externally; `4096/tcp` loopback-bound
+- Port scan: only `22/tcp` reachable externally; `5432/tcp` (PostgreSQL) loopback-bound
 - UFW logs: no dropped packets toward database
 - All CIS PostgreSQL 16 Benchmark v2.0.0 Level 1 controls satisfied
 - LinPEAS: no world-writable data directories, no escalation paths identified
@@ -229,7 +229,7 @@ Apache[2.4.58], HTTPServer[Ubuntu Linux][Apache/2.4.58 (Ubuntu)], Index-Of
 Title resolved as `Index of /`, confirming directory indexing active at the
 web root.
 
-**Gobuster** (`common.txt` wordlist, 4615 paths tested):
+**Gobuster** (`common.txt` wordlist, 4,615 paths tested):
 
 | Path | Status | Size |
 |---|---|---|
@@ -238,7 +238,7 @@ web root.
 | /.htpasswd | 403 | 277 |
 | /server-status | 403 | 277 |
 
-**Nikto** v2.5.0 (8102 requests, 15 findings):
+**Nikto** v2.5.0 (8,102 requests, 15 findings):
 
 - `X-Frame-Options` header absent
 - `X-Content-Type-Options` header absent
