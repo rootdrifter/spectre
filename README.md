@@ -447,4 +447,4 @@ to reduce version disclosure during reconnaissance. Set `LogLevel` to `info`.
 
 ---
 
-*Part of the [rootdrifter](https://github.com/rootdrifter) security portfolio — built and maintained by a security-cleared candidate. UK-issued clearance held now, not pending vetting: deployable to cleared work from day one.*
+*Part of the [rootdrifter](https://github.com/rootdrifter) security portfolio — full writeup at [rootdrifter.io/portfolio/spectre/](https://rootdrifter.io/portfolio/spectre/). Built and maintained by a security-cleared candidate. UK-issued clearance held now, not pending vetting: deployable to cleared work from day one.*
