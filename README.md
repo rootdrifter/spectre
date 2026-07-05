@@ -56,10 +56,11 @@ reconnaissance workflow without yielding enumerable findings.
 
 ## 3. Methodology
 
-The engagement follows the Penetration Testing Execution Standard (PTES) phase model, scoped to
-the rules of engagement above. Each PTES phase maps to a documented activity in this repository:
+The engagement is structured against CIS, OWASP and ISO/IEC 27002, scoped to the rules of
+engagement above. The table below maps each phase to a documented activity in this repository;
+the PTES phase model is included as a comparative reference only:
 
-| PTES phase | Activity in this engagement | Reference |
+| Engagement phase (PTES-comparative) | Activity in this engagement | Reference |
 |---|---|---|
 | Pre-engagement interactions | Grey-box scope, rules of engagement, lab topology agreed with peer | [engagement-scope.md](methodology/engagement-scope.md) |
 | Intelligence gathering | Full-port SYN scan, HTTP fingerprinting, directory enumeration | §3.2, [reconnaissance.md](methodology/reconnaissance.md) |
