@@ -14,7 +14,7 @@ PTES defines seven phases. The mapping to SPECTRE:
 |---|------------|----------------|-----------------|
 | 1 | **Pre-engagement Interactions** | Scope, rules of engagement, authorisation, timelines | Peer-exchange agreement; in-scope = unauth HTTP GET + authenticated local enum; out-of-scope = injection/LFI/RFI/brute-force/destructive actions; console access permitted |
 | 2 | **Intelligence Gathering** | Recon, footprinting, enumeration | nmap `-sS -sV -O -p-`; WhatWeb fingerprinting; Nikto; Gobuster directory enumeration; internal listening-port/module discovery |
-| 3 | **Threat Modeling** | Identify assets, threats, attack avenues | Identifying directory listing, version/OS disclosure, missing headers, and a loaded `mod_status` as the candidate avenues |
+| 3 | **Threat Modelling** | Identify assets, threats, attack avenues | Identifying directory listing, version/OS disclosure, missing headers, and a loaded `mod_status` as the candidate avenues |
 | 4 | **Vulnerability Analysis** | Validate weaknesses, map to CWE/benchmarks | Mapping findings to CWE-548/200/319/1021/693/250 and CIS Apache 2.4 v1.4.0; OWASP qualitative severity |
 | 5 | **Exploitation** | Gain access / confirm exploitability | Two unauthenticated HTTP GET attempts: `/server-status` (403) and web-root auto-index (200, success) |
 | 6 | **Post-Exploitation** | Determine impact, escalation, value of access | Authenticated LinPEAS enumeration → over-privileged `sudo`, plaintext cron, unnecessary services; **deliberately halted** before token-harvesting |
@@ -28,7 +28,7 @@ PTES defines seven phases. The mapping to SPECTRE:
 - **Post-exploitation was capped** at the ethical boundary (no credential/token harvesting), so
   full impact (e.g. lateral movement, data exfiltration) was reasoned about rather than
   demonstrated.
-- **Threat Modeling** was lightweight given a single-host lab; in a real PTES engagement this phase
+- **Threat Modelling** was lightweight given a single-host lab; in a real PTES engagement this phase
   would model business impact and attacker personas more formally.
 
 ---
