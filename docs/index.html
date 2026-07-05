@@ -1,0 +1,631 @@
+<!DOCTYPE html>
+<!-- DESIGN RATIONALE:
+     New entry in the design system — extending from ironveil base tokens.
+     Aesthetic: terminal output / forensic precision. Red/amber threat palette on deep charcoal.
+     --accent-red (#ff3b3b) for critical/finding elements, --accent-amber (#ffaa00) for warnings,
+     --accent-teal (#00d4b4) for methodology/info. Dense data layout appropriate for a pentest report.
+     Share Tech Mono for all identifiers, findings tags, CWE refs, severity labels.
+     Barlow 300 for body prose — matches ironveil's voice.
+     Scanline overlay retained. No vignette (spectre is about clarity, not atmosphere).
+     Footer: spectre + 2026-06-10.
+-->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SPECTRE — Grey-Box Penetration Test</title>
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Barlow:wght@300;400;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0c0e;
+    --surface: #0f1215;
+    --surface2: #141820;
+    --border: #1e2430;
+    --border-bright: #2e3848;
+    --accent-red: #ff3b3b;
+    --accent-amber: #ffaa00;
+    --accent-teal: #00d4b4;
+    --accent-blue: #4a9eff;
+    --text: #c0ccd8;
+    --text-bright: #e8eef5;
+    --muted: #48586a;
+    --code-bg: #070a0d;
+    --sev-critical: #ff3b3b;
+    --sev-high: #ff6b35;
+    --sev-med-high: #ffaa00;
+    --sev-med: #e8d000;
+    --sev-low: #4a9eff;
+    --green: #00e87a;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Barlow', sans-serif;
+    font-weight: 300;
+    line-height: 1.7;
+    min-height: 100vh;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.09) 2px, rgba(0,0,0,0.09) 4px);
+    pointer-events: none;
+    z-index: 100;
+  }
+
+  .container {
+    max-width: 920px;
+    margin: 0 auto;
+    padding: 3rem 2rem 6rem;
+    position: relative;
+    z-index: 1;
+  }
+
+  header {
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 2rem;
+    margin-bottom: 2rem;
+    position: relative;
+  }
+
+  .sys-label {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 0.3em;
+    color: var(--accent-red);
+    text-transform: uppercase;
+    margin-bottom: 0.75rem;
+    opacity: 0.85;
+  }
+
+  h1 {
+    font-size: 2.4rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    color: #fff;
+    text-transform: uppercase;
+    line-height: 1.1;
+  }
+
+  h1 .sep { color: var(--accent-red); font-weight: 300; margin: 0 0.3em; }
+
+  .subtitle {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.72rem;
+    color: var(--muted);
+    margin-top: 0.75rem;
+    letter-spacing: 0.1em;
+  }
+
+  .corner-tag {
+    position: absolute;
+    top: 0; right: 0;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.58rem;
+    color: var(--muted);
+    letter-spacing: 0.15em;
+    text-align: right;
+    line-height: 1.9;
+  }
+  .corner-tag span { display: block; }
+
+  .section-break {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin: 2.75rem 0 1.4rem;
+  }
+  .section-break span {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.62rem;
+    letter-spacing: 0.28em;
+    text-transform: uppercase;
+    color: var(--muted);
+    white-space: nowrap;
+  }
+  .section-break::before, .section-break::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  .info-block {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--accent-teal);
+    padding: 0.9rem 1.25rem;
+    margin: 1rem 0;
+    font-size: 0.85rem;
+    color: var(--text);
+  }
+  .info-block .blk-label {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.58rem;
+    color: var(--accent-teal);
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    display: block;
+    margin-bottom: 0.35rem;
+  }
+  .info-block code {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.76rem;
+    color: var(--accent-teal);
+    background: rgba(0,212,180,0.06);
+    padding: 0.1em 0.35em;
+  }
+
+  /* PTES phase table */
+  .data-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.8rem;
+    margin: 1rem 0;
+  }
+  .data-table th {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.55rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--muted);
+    padding: 0.45rem 0.9rem;
+    text-align: left;
+    border-bottom: 1px solid var(--border-bright);
+    background: var(--code-bg);
+  }
+  .data-table td {
+    padding: 0.6rem 0.9rem;
+    border-bottom: 1px solid var(--border);
+    vertical-align: top;
+    color: var(--text);
+  }
+  .data-table tr:last-child td { border-bottom: none; }
+  .data-table tr:hover td { background: rgba(255,59,59,0.025); }
+  .data-table td:first-child {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.68rem;
+    color: var(--accent-teal);
+    letter-spacing: 0.04em;
+    white-space: nowrap;
+  }
+
+  /* Tool chain */
+  .tool-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: var(--border-bright); margin: 1rem 0; }
+  .tool-cell {
+    background: var(--surface);
+    padding: 0.85rem 1rem;
+    font-size: 0.8rem;
+  }
+  .tool-name {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.72rem;
+    color: var(--accent-amber);
+    letter-spacing: 0.06em;
+    display: block;
+    margin-bottom: 0.3rem;
+  }
+  .tool-cell p { color: var(--text); line-height: 1.5; }
+
+  /* Findings */
+  .finding-list { display: flex; flex-direction: column; gap: 0.85rem; margin: 1rem 0; }
+  .finding-row {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    overflow: hidden;
+  }
+  .finding-head {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.65rem 1.1rem;
+    background: rgba(0,0,0,0.25);
+    border-bottom: 1px solid var(--border);
+  }
+  .finding-id {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.65rem;
+    color: var(--muted);
+    letter-spacing: 0.12em;
+    flex-shrink: 0;
+  }
+  .finding-title {
+    font-size: 0.85rem;
+    color: var(--text-bright);
+    font-weight: 400;
+    flex: 1;
+  }
+  .sev-tag {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.55rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    padding: 0.2em 0.6em;
+    flex-shrink: 0;
+  }
+  .sev-med-high { color: var(--sev-med-high); border: 1px solid var(--sev-med-high); }
+  .sev-med { color: var(--sev-med); border: 1px solid var(--sev-med); }
+  .sev-low { color: var(--sev-low); border: 1px solid var(--sev-low); }
+  .finding-body { padding: 0.75rem 1.1rem; font-size: 0.82rem; }
+  .finding-body p { margin-bottom: 0.45rem; }
+  .finding-body p:last-child { margin-bottom: 0; }
+  .finding-cwe {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.65rem;
+    color: var(--muted);
+    letter-spacing: 0.06em;
+    margin-top: 0.35rem;
+    display: block;
+  }
+  .finding-fix {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.68rem;
+    color: var(--accent-teal);
+    margin-top: 0.35rem;
+    display: block;
+  }
+  .finding-fix::before { content: '→ fix: '; color: var(--muted); }
+
+  /* Evidence chain */
+  .evidence-chain { display: flex; flex-direction: column; gap: 0.5rem; margin: 1rem 0; }
+  .ev-row {
+    display: grid;
+    grid-template-columns: 8rem 1fr;
+    gap: 1rem;
+    padding: 0.6rem 1rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    font-size: 0.8rem;
+    align-items: baseline;
+  }
+  .ev-type {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.65rem;
+    color: var(--accent-amber);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  /* Skills */
+  .skills-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: var(--border-bright); margin: 1rem 0; }
+  .skill-cell {
+    background: var(--surface);
+    padding: 0.85rem 1rem;
+    font-size: 0.8rem;
+  }
+  .skill-label {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.58rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--accent-red);
+    display: block;
+    margin-bottom: 0.35rem;
+  }
+  .skill-cell p { color: var(--text); line-height: 1.5; }
+
+  /* Status */
+  .status-block { display: flex; flex-direction: column; gap: 0.5rem; margin: 1rem 0; }
+  .status-row {
+    display: flex; align-items: flex-start; gap: 1rem;
+    padding: 0.7rem 1rem; background: var(--surface); border: 1px solid var(--border);
+  }
+  .status-tag {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.55rem; letter-spacing: 0.15em; text-transform: uppercase;
+    padding: 0.2em 0.55em; flex-shrink: 0; margin-top: 0.15rem;
+  }
+  .tag-clear { color: var(--green); border: 1px solid var(--green); }
+  .tag-scope { color: var(--accent-teal); border: 1px solid var(--accent-teal); }
+  .status-text { font-size: 0.84rem; color: var(--text); }
+  .status-text strong { color: var(--text-bright); font-weight: 600; }
+
+  .cmd-block {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--accent-amber);
+    padding: 0.85rem 1.2rem;
+    margin: 0.75rem 0;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.74rem;
+    color: var(--accent-amber);
+    overflow-x: auto;
+    white-space: pre;
+  }
+
+  footer {
+    margin-top: 4rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--border);
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.6rem;
+    color: var(--muted);
+    letter-spacing: 0.15em;
+    display: flex;
+    justify-content: space-between;
+    text-transform: uppercase;
+  }
+
+  p { margin-bottom: 0.8rem; }
+  p:last-child { margin-bottom: 0; }
+
+  @media (max-width: 640px) {
+    .tool-grid, .skills-grid { grid-template-columns: 1fr; }
+    .ev-row { grid-template-columns: 1fr; gap: 0.3rem; }
+    footer { flex-direction: column; gap: 0.5rem; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <header>
+    <div class="sys-label">// GREY-BOX PENETRATION TEST — PORTFOLIO ENGAGEMENT</div>
+    <h1>Spectre<span class="sep">//</span>Engage</h1>
+    <div class="subtitle">APACHE 2.4.58 TARGET · POSTGRESQL 16 DEFENDED · PTES METHODOLOGY · QUALITY GATE — CLEAR</div>
+    <div class="corner-tag">
+      <span>ENGAGEMENT STATUS — COMPLETE</span>
+      <span>rev 2026-06-10</span>
+    </div>
+  </header>
+
+  <div class="info-block">
+    <span class="blk-label">Overview</span>
+    Grey-box penetration test of a peer-supplied Apache 2.4.58 host on Ubuntu 24.04.2 LTS,
+    conducted against a self-hardened PostgreSQL 16 server built to CIS Level 1 Benchmark.
+    Full methodology documented: reconnaissance, host enumeration, two exploitation attempts,
+    SHA-256 evidence chain, and countermeasures mapped to ISO/IEC 27002:2022 and CIS Apache
+    HTTP Server 2.4 Benchmark v1.4.0.
+  </div>
+
+  <div class="section-break"><span>Engagement Scope</span></div>
+
+  <div class="status-block">
+    <div class="status-row">
+      <span class="status-tag tag-scope">Target</span>
+      <div class="status-text"><strong>Apache 2.4.58 on Ubuntu 24.04.2 LTS</strong> — peer-operated host</div>
+    </div>
+    <div class="status-row">
+      <span class="status-tag tag-scope">Model</span>
+      <div class="status-text"><strong>Grey-box</strong> — authenticated console access available; disruptive exploits out of scope</div>
+    </div>
+    <div class="status-row">
+      <span class="status-tag tag-scope">Environment</span>
+      <div class="status-text">Two VirtualBox guests (2 vCPUs / 2 GB RAM) on isolated 192.168.0.0/24 host-only subnet. Kali Linux workstation as attack platform.</div>
+    </div>
+    <div class="status-row">
+      <span class="status-tag tag-scope">Constraint</span>
+      <div class="status-text">Unauthenticated HTTP vectors only. No command injection, LFI/RFI, or brute-force. All actions logged and SHA-256 verified.</div>
+    </div>
+    <div class="status-row">
+      <span class="status-tag tag-clear">Defended Asset</span>
+      <div class="status-text"><strong>PostgreSQL 16 server</strong> — built to CIS Level 1 standard. Exposed no enumerable attack surface.</div>
+    </div>
+  </div>
+
+  <div class="section-break"><span>PTES Phase Map</span></div>
+
+  <table class="data-table">
+    <tr><th>PTES Phase</th><th>Activity</th><th>Reference</th></tr>
+    <tr><td>Pre-engagement</td><td>Grey-box scope, rules of engagement, lab topology agreed</td><td>engagement-scope.md</td></tr>
+    <tr><td>Intelligence gathering</td><td>Full-port SYN scan, HTTP fingerprinting, directory enumeration</td><td>reconnaissance.md</td></tr>
+    <tr><td>Threat modelling</td><td>Risk questions and defended-asset definition</td><td>README §2</td></tr>
+    <tr><td>Vulnerability analysis</td><td>Findings cross-referenced to CWE, CIS Apache 2.4, OWASP</td><td>vulnerability-report.md</td></tr>
+    <tr><td>Exploitation</td><td>Two unauthenticated HTTP GET attempts</td><td>exploitation.md</td></tr>
+    <tr><td>Post-exploitation</td><td>LinPEAS privilege/service enumeration (scoped, halted pre-token-harvest)</td><td>README §3.3</td></tr>
+    <tr><td>Reporting</td><td>Findings, severity, ISO/IEC 27002-mapped countermeasures</td><td>countermeasures.md</td></tr>
+  </table>
+
+  <div class="section-break"><span>Toolchain</span></div>
+
+  <div class="tool-grid">
+    <div class="tool-cell">
+      <span class="tool-name">nmap -sS -sV -O -p-</span>
+      <p>Full-port SYN scan with service and OS fingerprinting. Identified open ports 22/tcp (SSH) and 80/tcp (Apache 2.4.58).</p>
+    </div>
+    <div class="tool-cell">
+      <span class="tool-name">Gobuster dir</span>
+      <p>Directory brute-force with common.txt (4,615 paths). Confirmed /server-status access-controlled (403) and web-root indexing active.</p>
+    </div>
+    <div class="tool-cell">
+      <span class="tool-name">WhatWeb -a 3</span>
+      <p>HTTP fingerprinting at aggression level 3. Resolved Apache[2.4.58], HTTPServer[Ubuntu Linux], Index-Of — version and indexing disclosure.</p>
+    </div>
+    <div class="tool-cell">
+      <span class="tool-name">Nikto v2.5.0</span>
+      <p>8,102 requests, 15 findings. Confirmed missing security headers, directory indexing at multiple paths, permitted OPTIONS methods.</p>
+    </div>
+    <div class="tool-cell">
+      <span class="tool-name">LinPEAS (PEASS-ng v0.2.0)</span>
+      <p>Host privilege and service enumeration. Scoped to /home/, halted pre-API-key phase. Identified unrestricted sudo, unnecessary services, autoindex config.</p>
+    </div>
+    <div class="tool-cell">
+      <span class="tool-name">curl / manual HTTP</span>
+      <p>Two unauthenticated exploitation attempts: GET /server-status (403 returned) and GET / (200 — directory listing confirmed, CWE-548).</p>
+    </div>
+  </div>
+
+  <div class="section-break"><span>Findings</span></div>
+
+  <div class="finding-list">
+
+    <div class="finding-row">
+      <div class="finding-head">
+        <span class="finding-id">F1</span>
+        <span class="finding-title">Directory auto-indexing enabled at web root</span>
+        <span class="sev-tag sev-med-high">Medium-High</span>
+      </div>
+      <div class="finding-body">
+        <p><code style="font-family:'Share Tech Mono',monospace;font-size:0.72rem;color:var(--accent-teal)">Options Indexes</code> active in <code style="font-family:'Share Tech Mono',monospace;font-size:0.72rem;color:var(--accent-teal)">/etc/apache2/apache2.conf</code>. Web root returned HTTP 200 with auto-generated directory listing. Any future file drops — backup archives, credentials, source — exposed to unauthenticated enumeration.</p>
+        <span class="finding-cwe">CWE-548 — Exposure of Information Through Directory Listing · CIS Apache 2.4 Benchmark control 2.5</span>
+        <span class="finding-fix">a2dismod autoindex; Options -Indexes in virtualhost config</span>
+      </div>
+    </div>
+
+    <div class="finding-row">
+      <div class="finding-head">
+        <span class="finding-id">F2</span>
+        <span class="finding-title">Cleartext HTTP only — no TLS or HTTPS redirect</span>
+        <span class="sev-tag sev-med">Medium</span>
+      </div>
+      <div class="finding-body">
+        <p>No TLS virtual host configured. All traffic transmitted in cleartext. No redirect from 80 to 443.</p>
+        <span class="finding-cwe">CWE-319 — Cleartext Transmission of Sensitive Information</span>
+        <span class="finding-fix">HTTP→HTTPS 301 redirect; TLS virtual host with valid certificate</span>
+      </div>
+    </div>
+
+    <div class="finding-row">
+      <div class="finding-head">
+        <span class="finding-id">F3</span>
+        <span class="finding-title">Security headers absent (X-Frame-Options, X-Content-Type-Options)</span>
+        <span class="sev-tag sev-med">Medium</span>
+      </div>
+      <div class="finding-body">
+        <p>Nikto confirmed absence of X-Frame-Options and X-Content-Type-Options on all responses. X-XSS-Protection also absent. Increases attack surface for clickjacking and MIME-type sniffing.</p>
+        <span class="finding-cwe">CWE-1021 · CWE-693 — Protection Mechanism Failure</span>
+        <span class="finding-fix">Header always set X-Frame-Options DENY; X-Content-Type-Options nosniff; X-XSS-Protection 1; mode=block</span>
+      </div>
+    </div>
+
+    <div class="finding-row">
+      <div class="finding-head">
+        <span class="finding-id">F4</span>
+        <span class="finding-title">Service version and OS disclosure</span>
+        <span class="sev-tag sev-low">Low</span>
+      </div>
+      <div class="finding-body">
+        <p>Server banner returned <code style="font-family:'Share Tech Mono',monospace;font-size:0.72rem;color:var(--accent-teal)">Apache/2.4.58 (Ubuntu)</code> in HTTP headers. Version disclosure reduces reconnaissance cost for targeted exploitation.</p>
+        <span class="finding-cwe">CWE-200 — Exposure of Sensitive Information to an Unauthorised Actor</span>
+        <span class="finding-fix">ServerTokens Prod; ServerSignature Off</span>
+      </div>
+    </div>
+
+    <div class="finding-row">
+      <div class="finding-head">
+        <span class="finding-id">F5</span>
+        <span class="finding-title">mod_status loaded (403 confirms module present)</span>
+        <span class="sev-tag sev-low">Low</span>
+      </div>
+      <div class="finding-body">
+        <p>GET /server-status returned 403 Forbidden — partial compliance with CIS. The 403 itself confirms mod_status is loaded. Full remediation requires removing the module or firewall suppression.</p>
+        <span class="finding-cwe">CWE-200 — Exposure of Sensitive Information</span>
+        <span class="finding-fix">Require ip 127.0.0.1 on /server-status; a2dismod status if unused</span>
+      </div>
+    </div>
+
+    <div class="finding-row">
+      <div class="finding-head">
+        <span class="finding-id">F6</span>
+        <span class="finding-title">Host user in sudo group with unrestricted command execution</span>
+        <span class="sev-tag sev-med">Medium</span>
+      </div>
+      <div class="finding-body">
+        <p>LinPEAS confirmed host user member of sudo group with no command restrictions. Violates principle of least privilege. A successful exploit chained with this finding enables full system compromise.</p>
+        <span class="finding-cwe">CWE-250 — Execution with Unnecessary Privileges</span>
+        <span class="finding-fix">Remove from sudo; enforce least-privilege; key-only SSH; RBAC-style scoped sudoers</span>
+      </div>
+    </div>
+
+    <div class="finding-row">
+      <div class="finding-head">
+        <span class="finding-id">F7</span>
+        <span class="finding-title">Unnecessary services running (snapd, ModemManager)</span>
+        <span class="sev-tag sev-low">Low</span>
+      </div>
+      <div class="finding-body">
+        <p>Neither service required by the web stack. Each running service adds to the exploitable attack surface and consumes update bandwidth without security benefit.</p>
+        <span class="finding-cwe">CIS minimisation control — excessive attack surface</span>
+        <span class="finding-fix">systemctl disable --now snapd ModemManager</span>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="info-block" style="border-left-color: var(--green);">
+    <span class="blk-label" style="color:var(--green)">PostgreSQL Server — Baseline Posture</span>
+    All CIS PostgreSQL 16 Benchmark v2.0.0 Level 1 controls satisfied. Port scan: only 22/tcp
+    reachable externally; 5432/tcp loopback-bound. No world-writable data directories.
+    No privilege escalation paths identified by LinPEAS. scram-sha-256 authentication for
+    all host connections. The same Ubuntu base, hardened correctly, produces zero enumerable findings.
+  </div>
+
+  <div class="section-break"><span>Evidence Chain</span></div>
+
+  <div class="evidence-chain">
+    <div class="ev-row">
+      <div class="ev-type">Session logs</div>
+      <div>external_session.log (all external commands) + internal_session.log (concurrent enumeration)</div>
+    </div>
+    <div class="ev-row">
+      <div class="ev-type">Artefacts</div>
+      <div>apache_full.nmap, gobuster.txt, whatweb.txt, nikto.html, linpeas_out.txt, status.txt, listing_root.html</div>
+    </div>
+    <div class="ev-row">
+      <div class="ev-type">Integrity</div>
+      <div>All 24 files in apache_pentest.zip (4.1 MiB) SHA-256 hashed to confirm no post-acquisition modification</div>
+    </div>
+    <div class="ev-row">
+      <div class="ev-type">Screenshots</div>
+      <div>status_403.png (F5 — 403 Forbidden), listing_root.png (F1 — directory listing confirmed)</div>
+    </div>
+  </div>
+
+  <div class="section-break"><span>Skills Demonstrated</span></div>
+
+  <div class="skills-grid">
+    <div class="skill-cell">
+      <span class="skill-label">Network Reconnaissance</span>
+      <p>Full-port SYN scan with nmap -sS -sV -O -p-. Service and OS fingerprinting.</p>
+    </div>
+    <div class="skill-cell">
+      <span class="skill-label">Web Application Enumeration</span>
+      <p>Directory brute-force (Gobuster), HTTP fingerprinting (WhatWeb, Nikto v2.5.0).</p>
+    </div>
+    <div class="skill-cell">
+      <span class="skill-label">Host Privilege Analysis</span>
+      <p>LinPEAS privilege escalation enumeration — sudo, SUID/SGID, cron, service audit.</p>
+    </div>
+    <div class="skill-cell">
+      <span class="skill-label">Vulnerability Identification</span>
+      <p>CWE-548 directory listing; mod_status exposure; absent security headers; least-privilege violation.</p>
+    </div>
+    <div class="skill-cell">
+      <span class="skill-label">Risk Quantification</span>
+      <p>OWASP qualitative likelihood × impact risk scoring across 7 findings.</p>
+    </div>
+    <div class="skill-cell">
+      <span class="skill-label">Database Hardening</span>
+      <p>PostgreSQL 16 built to CIS Level 1 Benchmark v2.0.0; scram-sha-256 auth; UFW isolation.</p>
+    </div>
+    <div class="skill-cell">
+      <span class="skill-label">Evidence Integrity</span>
+      <p>SHA-256 artefact chain; dual session logs; structured evidence archive (24 files, 4.1 MiB).</p>
+    </div>
+    <div class="skill-cell">
+      <span class="skill-label">Control Framework Mapping</span>
+      <p>Findings and countermeasures mapped to ISO/IEC 27002:2022 and CIS Apache 2.4 Benchmark v1.4.0.</p>
+    </div>
+  </div>
+
+  <div class="section-break"><span>Repository</span></div>
+
+  <div class="info-block">
+    <span class="blk-label">GitHub</span>
+    Full methodology, findings, countermeasures, and research references:
+    <code>github.com/rootdrift/spectre</code>
+  </div>
+
+  <footer>
+    <span>spectre — grey-box penetration test</span>
+    <span>rev 2026-06-10</span>
+  </footer>
+
+</div>
+</body>
+</html>
