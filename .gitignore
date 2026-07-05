@@ -15,6 +15,7 @@
 *.gnmap
 *.xml
 *.html
+!docs/*.html
 nikto.*
 gobuster.txt
 whatweb.txt
