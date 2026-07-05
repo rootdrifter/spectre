@@ -348,3 +348,7 @@ to reduce version disclosure during reconnaissance. Set `LogLevel` to `info`.
 | Web server hardening | CIS Apache 2.4 Benchmark v1.4.0 controls; TLS enforcement; security header deployment |
 | Evidence integrity | SHA-256 artefact chain; dual session logs; structured evidence archive |
 | Control framework mapping | Findings and countermeasures mapped to ISO/IEC 27002:2022 and CIS benchmarks |
+
+---
+
+*Part of the [rootdrifter](https://github.com/rootdrifter) security portfolio — built and maintained by a security-cleared candidate. UK-issued clearance held now, not pending vetting: deployable to cleared work from day one.*
