@@ -15,8 +15,8 @@ roles in a single exercise:
 | Component | Specification |
 |-----------|---------------|
 | Hypervisor | Oracle VirtualBox |
-| PG-VM (defended asset) | Ubuntu 24, 2 native vCPUs, 2 GB RAM, PostgreSQL 16 |
-| Apache-VM (target) | Ubuntu 24, 2 native vCPUs, 2 GB RAM, Apache 2.4.58 |
+| PG-VM (defended asset) | Ubuntu 24.04.2 LTS, 2 native vCPUs, 2 GB RAM, PostgreSQL 16 |
+| Apache-VM (target) | Ubuntu 24.04.2 LTS, 2 native vCPUs, 2 GB RAM, Apache 2.4.58 |
 | Attacker workstation | Kali Linux — all external scanning and exploitation |
 | Internal network | Isolated host-only subnet `192.168.0.0/24` |
 | External reachability | Bridged adapters between guests for unrestricted scanning |
