@@ -2,9 +2,11 @@
 
 Grey-box penetration test of a peer-supplied Apache host, conducted against a
 self-hardened PostgreSQL server. Full methodology documented: reconnaissance,
-host enumeration, two exploitation attempts, SHA-256 evidence chain, and
-countermeasures mapped to ISO/IEC 27002:2022 and CIS Apache HTTP Server 2.4
-Benchmark v1.4.0.
+host enumeration, two exploitation attempts, a reproducible SHA-256 evidence
+chain, and countermeasures mapped to ISO/IEC 27002:2022 and CIS Apache HTTP
+Server 2.4 Benchmark v1.4.0 — then closed with a **detection perspective** that
+maps every offensive step to the log source and Wazuh rule that would catch it,
+turning a one-sided test into a purple-team artefact.
 
 ---
 
@@ -149,12 +151,32 @@ Apache 2.4 Benchmark control 2.5. Evidence captured via `curl -s` to
 
 ### 3.5 Evidence Handling
 
-- External actions: `external_session.log`
-- Internal enumeration: `internal_session.log`
-- All artefacts SHA-256 hashed to confirm no post-acquisition modification
-- File transfers via SSH key pairs (passphrase-protected private keys,
-  restricted sudo access)
-- Full evidence archive: `apache_pentest.zip` (24 files, 4.1 MiB)
+Every artefact is integrity-protected so a reviewer can prove nothing was altered between acquisition
+and reporting — the same chain-of-custody discipline a court or a client audit would require.
+
+- **Dual session logs:** external actions to `external_session.log`; internal enumeration to
+  `internal_session.log` (both timestamped, append-only during the engagement).
+- **Reproducible integrity manifest.** At acquisition, every artefact is hashed into a single
+  manifest, which is itself the verification instrument:
+  ```bash
+  # At acquisition — one manifest over the whole evidence set
+  sha256sum external_session.log internal_session.log status.txt status_403.png \
+            listing_root.html listing_root.png nmap/* gobuster.txt whatweb.txt \
+            nikto.html linpeas_out.txt  > evidence.sha256
+
+  # At reporting / by any reviewer — re-verify nothing changed (must print "OK" for every line)
+  sha256sum -c evidence.sha256
+  ```
+  A single changed byte in any artefact makes its line fail verification, so the manifest is the
+  tamper-evidence seal for the whole set.
+- **Archive-level hash.** The packaged archive carries its own digest so the bundle can be verified
+  as a unit before it is even unpacked:
+  ```bash
+  sha256sum apache_pentest.zip > apache_pentest.zip.sha256   # 24 files, 4.1 MiB
+  ```
+- **Transfer integrity:** all file transfers over SSH key pairs (passphrase-protected private keys,
+  restricted sudo) — the channel that moves the evidence is itself authenticated and encrypted, so
+  the hashes verify *and* the path they travelled is trusted.
 
 ---
 
@@ -274,7 +296,74 @@ reconnaissance workflow.
 
 ---
 
-## 5. Countermeasures and Recommendations
+## 5. Detection Perspective — The Defender's View
+
+A finding is only half the story. The other half — and the one a SOC cares about — is *would anyone
+have noticed?* This section maps every offensive action in the engagement to the log evidence it
+generates and the detection logic that would surface it, mirroring the offence→detection discipline
+in [gauntlet](https://github.com/rootdrifter/gauntlet) and feeding the Wazuh rules in
+watchtower. It turns a one-sided pentest into a
+purple-team artefact: here is the attack, and here is exactly how the blue team catches it.
+
+The defining characteristic of this engagement's recon is that **it was loud**. Nikto alone issued
+8,102 requests and Gobuster tested 4,615 paths — that volume is trivially detectable, and the honest
+defensive finding is that the Apache host had *no* logging pipeline that would have raised an alert.
+
+| Offensive action (this engagement) | Log source that captures it | ATT&CK | Detection logic |
+|---|---|---|---|
+| Full-port SYN scan (`nmap -sS -p-`) | Firewall / NetFlow / Suricata | T1595.001 / T1046 | Many SYNs to many (mostly closed) ports from one source in a short window — connection-rate anomaly per source |
+| Directory brute-force (Gobuster, 4,615 paths) | Apache `access.log` | T1595.003 | A burst of 404/403 responses to non-existent paths from a single IP — the canonical web-enumeration signature |
+| Vulnerability scan (Nikto, 8,102 requests) | Apache `access.log` | T1595.002 | High request volume + the default Nikto User-Agent + probes to `/.hta`, `/.htpasswd`, test CGI paths |
+| Directory-index discovery (the CWE-548 finding) | Apache `access.log` | T1083 | `GET /` (and sub-dirs) returning HTTP 200 with `Index of` titles — repeated listing requests = active enumeration |
+| `/server-status` probe | Apache `access.log` | T1592 | Requests to status/admin endpoints; the 403 is logged and is itself the indicator |
+| LinPEAS host enumeration | `auditd` (execve) | T1059 / T1083 / T1082 | A single process rapidly reading `/etc/passwd`, running `find / -perm -4000`, `sudo -l`, and crontab — a textbook local-recon execve burst |
+| `sudo` privilege use (finding F6) | `auditd` / `/var/log/auth.log` | T1548.003 | Privileged command execution by the host user — baseline and alert on anomalous sudo |
+
+### Two detections worth writing (the loudest, highest-fidelity signals)
+
+**1. Web reconnaissance — 404/403 burst per source.** Gobuster and Nikto generate hundreds-to-thousands
+of failed requests from one IP. A Wazuh correlation rule keyed on the Apache access log catches this
+with almost no false positives, because legitimate users do not request 4,000 non-existent paths:
+
+```xml
+<group name="apache,web,recon,attack,">
+  <!-- Many 404/403s from one source in a short window = directory/vuln scanning -->
+  <rule id="100600" level="10" frequency="50" timeframe="30">
+    <if_matched_sid>31108</if_matched_sid>   <!-- Apache 4xx access-log rule -->
+    <same_source_ip />
+    <description>Web reconnaissance: 404/403 burst from one source (Gobuster/Nikto-class scan) — T1595</description>
+    <mitre><id>T1595.003</id></mitre>
+  </rule>
+</group>
+```
+
+**2. Host enumeration — the LinPEAS execve pattern.** Once on the host, the enumeration script's
+behaviour is high-signal: a single parent rapidly invoking `find … -perm`, `sudo -l`, and `cat
+/etc/passwd`. An auditd-backed Wazuh rule on that execve cluster catches privilege-escalation recon
+(the watchtower lab builds exactly this class of detection):
+
+```xml
+<group name="linux,audit,privesc,attack,">
+  <rule id="100601" level="12">
+    <if_group>audit</if_group>
+    <field name="audit.command" type="pcre2">(find .*-perm|sudo -l|linpeas)</field>
+    <description>Local privilege-escalation enumeration (LinPEAS-class behaviour) — T1083/T1548</description>
+    <mitre><id>T1083</id><id>T1548.003</id></mitre>
+  </rule>
+</group>
+```
+
+### The honest defensive finding
+The Apache host had **no detection pipeline at all** — no IDS, no log shipping, `auditd` was not
+forwarding, and the noisy scans above would have gone entirely unobserved. That is itself a reportable
+gap: the §5 countermeasures harden the *attack surface*, but a host with this exposure also needs the
+*monitoring* layer. The recommended SIEM integration (Wazuh — built out in
+watchtower) would turn every row in the table above into
+an alert, closing the loop from "exploitable" to "exploitable **and** detected."
+
+---
+
+## 6. Countermeasures and Recommendations
 
 All countermeasures mapped to ISO/IEC 27002:2022 and CIS Apache HTTP Server 2.4
 Benchmark v1.4.0.
@@ -337,7 +426,7 @@ to reduce version disclosure during reconnaissance. Set `LogLevel` to `info`.
 
 ---
 
-## 6. Skills Demonstrated
+## 7. Skills Demonstrated
 
 | Domain | Evidence |
 |---|---|
@@ -350,6 +439,7 @@ to reduce version disclosure during reconnaissance. Set `LogLevel` to `info`.
 | Web server hardening | CIS Apache 2.4 Benchmark v1.4.0 controls; TLS enforcement; security header deployment |
 | Evidence integrity | SHA-256 artefact chain; dual session logs; structured evidence archive |
 | Control framework mapping | Findings and countermeasures mapped to ISO/IEC 27002:2022 and CIS benchmarks |
+| Detection engineering (purple-team) | Each offensive step mapped to its log source, ATT&CK technique, and a Wazuh detection rule (§5) — feeds the watchtower SIEM lab |
 
 ---
 
