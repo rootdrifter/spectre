@@ -241,8 +241,10 @@ Evidence: `status.txt`, `status_403.png`.
 
 Web-root request returned an auto-generated directory listing. Although empty
 at time of test, the configuration exposes any future files — backup archives,
-application source, PHP credential strings — to unauthenticated enumeration,
-directly enabling SQL injection reconnaissance.
+application source, PHP credential strings — to unauthenticated enumeration.
+Disclosed source or embedded credential material would in turn seed follow-on
+attacks — credential reuse, or injection against a disclosed backend — making
+directory indexing a reconnaissance multiplier rather than a contained finding.
 
 **Finding:** CWE-548 — Exposure of Information Through Directory Listing  
 **CIS control violated:** Apache HTTP Server 2.4 Benchmark v1.4.0, control 2.5  
