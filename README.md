@@ -178,6 +178,10 @@ and reporting — the same chain-of-custody discipline a court or a client audit
   restricted sudo) — the channel that moves the evidence is itself authenticated and encrypted, so
   the hashes verify *and* the path they travelled is trusted.
 
+A standalone **[evidence-chain specification](evidence-chain.md)** explains the forensic reasoning:
+how integrity, authenticity, and custody are kept distinct; chain-of-custody applied to digital
+evidence; independent reviewer verification; and the honest limits of an unsigned manifest.
+
 ---
 
 ## 4. Results and Findings
