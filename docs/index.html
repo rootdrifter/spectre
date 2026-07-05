@@ -155,13 +155,15 @@
     display: block;
     margin-bottom: 0.35rem;
   }
-  .info-block code {
+  .info-block code, p code {
     font-family: 'Share Tech Mono', monospace;
     font-size: 0.76rem;
     color: var(--accent-teal);
     background: rgba(0,212,180,0.06);
     padding: 0.1em 0.35em;
   }
+  .narrative { font-size: 0.9rem; color: var(--text); margin: 0.5rem 0 0.4rem; }
+  .narrative em { color: var(--accent-amber); font-style: normal; }
 
   /* PTES phase table */
   .data-table {
@@ -384,6 +386,27 @@
     SHA-256 evidence chain, and countermeasures mapped to ISO/IEC 27002:2022 and CIS Apache
     HTTP Server 2.4 Benchmark v1.4.0.
   </div>
+
+  <div class="section-break"><span>Attack Path</span></div>
+
+  <p class="narrative">The engagement unfolded as a single connected chain. A full-port SYN scan
+  surfaced only two services — SSH on 22 and Apache 2.4.58 on 80 — but the server banner disclosed
+  its exact version and OS unprompted: the first information leak. HTTP fingerprinting confirmed an
+  active <code>Index of /</code> at the web root before any directed probing, and Gobuster narrowed
+  the surface further — <code>/server-status</code> returned 403, proving <code>mod_status</code>
+  was loaded but only access-controlled, partial hardening rather than removal. Two unauthenticated
+  GET requests then tested the two strongest leads: <code>/server-status</code> held at 403, but
+  the web root returned 200 with a live directory listing (CWE-548) — the finding that would expose
+  any future backup archive, source file, or credential string to anonymous enumeration and seed
+  SQL-injection reconnaissance. Authenticated local enumeration with LinPEAS closed the picture: an
+  over-privileged sudo account and services irrelevant to the web stack widened the host's attack
+  surface well beyond HTTP.</p>
+
+  <p class="narrative">The control case ran in parallel. The self-hardened PostgreSQL 16 server —
+  same Ubuntu base, same hypervisor — returned <em>nothing</em> enumerable: only SSH reachable, the
+  database loopback-bound, every CIS Level 1 control satisfied, no escalation path found. Same OS,
+  opposite outcome — configuration, not platform, decided breach resistance. That contrast is the
+  engagement's headline finding and the way these results would be framed for a client.</p>
 
   <div class="section-break"><span>Engagement Scope</span></div>
 
@@ -620,11 +643,13 @@
   <div class="info-block">
     <span class="blk-label">GitHub</span>
     Full methodology, findings, countermeasures, and research references:
-    <code>github.com/rootdrifter/spectre</code>
+    <code>github.com/rootdrifter/spectre</code> — one repository in the
+    <code>github.com/rootdrifter</code> portfolio.
   </div>
 
   <footer>
     <span>spectre — grey-box penetration test</span>
+    <span>rootdrifter · security-cleared</span>
     <span>rev 2026-06-10</span>
   </footer>
 
