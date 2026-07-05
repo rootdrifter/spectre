@@ -367,6 +367,106 @@
     text-transform: uppercase;
   }
 
+  /* Attack path timeline (interactive) */
+  .timeline-hint {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.6rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin: 0.5rem 0 1rem;
+  }
+  .timeline {
+    display: flex;
+    align-items: flex-start;
+    margin: 1.25rem 0 0.5rem;
+  }
+  .tl-node {
+    flex: 1;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+    position: relative;
+    text-align: center;
+  }
+  .tl-node::before {
+    content: '';
+    position: absolute;
+    top: 9px;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: var(--border-bright);
+  }
+  .tl-node:first-child::before { left: 50%; }
+  .tl-node:last-child::before { right: 50%; }
+  .tl-dot {
+    position: relative;
+    z-index: 1;
+    display: inline-block;
+    width: 19px;
+    height: 19px;
+    line-height: 17px;
+    border-radius: 50%;
+    background: var(--bg);
+    border: 1px solid var(--border-bright);
+    color: var(--muted);
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.55rem;
+    transition: border-color 0.2s, color 0.2s, box-shadow 0.2s;
+  }
+  .tl-label {
+    display: block;
+    margin-top: 0.5rem;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.55rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted);
+    transition: color 0.2s;
+  }
+  .tl-node:hover .tl-dot { border-color: var(--accent-red); color: var(--accent-red); }
+  .tl-node:hover .tl-label { color: var(--text); }
+  .tl-node.active .tl-dot {
+    border-color: var(--accent-red);
+    color: var(--accent-red);
+    box-shadow: 0 0 10px rgba(255,59,59,0.35);
+  }
+  .tl-node.active .tl-label { color: var(--accent-red); }
+  .tl-panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--accent-red);
+    padding: 1rem 1.3rem;
+    margin: 1rem 0 0.5rem;
+    font-size: 0.84rem;
+    min-height: 7.5rem;
+  }
+  .tl-panel .tl-phase {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.6rem;
+    color: var(--accent-red);
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    display: block;
+    margin-bottom: 0.4rem;
+  }
+  .tl-panel .tl-tools {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.66rem;
+    color: var(--accent-amber);
+    letter-spacing: 0.05em;
+    display: block;
+    margin-bottom: 0.5rem;
+  }
+  .tl-panel .tl-tools::before { content: 'tools: '; color: var(--muted); }
+  .tl-panel p { margin-bottom: 0.4rem; }
+  .tl-panel p:last-child { margin-bottom: 0; }
+  @media (max-width: 640px) {
+    .tl-label { font-size: 0.45rem; letter-spacing: 0.06em; }
+  }
+
   p { margin-bottom: 0.8rem; }
   p:last-child { margin-bottom: 0; }
 
@@ -501,6 +601,24 @@
   database loopback-bound, every CIS Level 1 control satisfied, no escalation path found. Same OS,
   opposite outcome — configuration, not platform, decided breach resistance. That contrast is the
   engagement's headline finding and the way these results would be framed for a client.</p>
+
+  <div class="section-break"><span>Attack Path Timeline</span></div>
+
+  <p class="timeline-hint">// Interactive &mdash; click a phase to expand its tools and findings</p>
+
+  <div class="timeline" role="tablist" aria-label="Pentest phases">
+    <button class="tl-node active" data-phase="0" role="tab" aria-selected="true"><span class="tl-dot">01</span><span class="tl-label">Recon</span></button>
+    <button class="tl-node" data-phase="1" role="tab" aria-selected="false"><span class="tl-dot">02</span><span class="tl-label">Enumeration</span></button>
+    <button class="tl-node" data-phase="2" role="tab" aria-selected="false"><span class="tl-dot">03</span><span class="tl-label">Exploitation</span></button>
+    <button class="tl-node" data-phase="3" role="tab" aria-selected="false"><span class="tl-dot">04</span><span class="tl-label">Post-Exploitation</span></button>
+    <button class="tl-node" data-phase="4" role="tab" aria-selected="false"><span class="tl-dot">05</span><span class="tl-label">Reporting</span></button>
+  </div>
+
+  <div class="tl-panel" id="tlPanel" aria-live="polite">
+    <span class="tl-phase" id="tlPhase"></span>
+    <span class="tl-tools" id="tlTools"></span>
+    <div id="tlBody"></div>
+  </div>
 
   <div class="section-break"><span>Engagement Scope</span></div>
 
@@ -775,6 +893,70 @@
     var open = l.classList.toggle('open');
     t.setAttribute('aria-expanded', open ? 'true' : 'false');
   });
+})();
+</script>
+<script>
+(function () {
+  var PHASES = [
+    {
+      name: 'Phase 01 \u2014 Reconnaissance',
+      tools: 'nmap -sS -sV -O -p-',
+      body: '<p>Full-port SYN scan with service and OS fingerprinting surfaced exactly two ' +
+        'services: SSH on 22/tcp and Apache 2.4.58 on 80/tcp.</p>' +
+        '<p><strong>Key observation:</strong> the server banner disclosed its exact version and OS ' +
+        'unprompted \u2014 the engagement\u2019s first information leak (feeds F4).</p>'
+    },
+    {
+      name: 'Phase 02 \u2014 Enumeration',
+      tools: 'WhatWeb -a 3 \u00b7 Gobuster (common.txt, 4,615 paths) \u00b7 Nikto v2.5.0 (8,102 requests)',
+      body: '<p>HTTP fingerprinting confirmed an active <em>Index of /</em> at the web root before any ' +
+        'directed probing. Gobuster narrowed the surface: <strong>/server-status returned 403</strong> ' +
+        '\u2014 proving mod_status was loaded but only access-controlled (partial hardening, F5). ' +
+        'Nikto returned 15 findings including missing security headers (F3) and directory indexing ' +
+        'at multiple paths.</p>'
+    },
+    {
+      name: 'Phase 03 \u2014 Exploitation',
+      tools: 'curl / manual HTTP \u2014 two unauthenticated GET requests',
+      body: '<p>Two scoped exploitation attempts against the strongest leads: ' +
+        '<strong>GET /server-status</strong> held at 403; <strong>GET /</strong> returned 200 with a ' +
+        'live directory listing \u2014 <strong>CWE-548</strong>, the engagement\u2019s primary finding ' +
+        '(F1). Any future file drop \u2014 backup archive, source, credentials \u2014 would be exposed ' +
+        'to anonymous enumeration.</p>'
+    },
+    {
+      name: 'Phase 04 \u2014 Post-Exploitation',
+      tools: 'LinPEAS (PEASS-ng v0.2.0) \u2014 scoped to /home/, halted pre-token-harvest',
+      body: '<p>Authenticated local enumeration closed the picture: an over-privileged sudo account ' +
+        'with no command restrictions (F6) and services irrelevant to the web stack \u2014 snapd, ' +
+        'ModemManager \u2014 widening the attack surface (F7). Scope discipline: the run was halted ' +
+        'before the API-key harvesting phase.</p>'
+    },
+    {
+      name: 'Phase 05 \u2014 Reporting',
+      tools: 'OWASP risk scoring \u00b7 ISO/IEC 27002:2022 \u00b7 CIS Apache 2.4 Benchmark v1.4.0',
+      body: '<p>Seven findings, each severity-rated by qualitative likelihood \u00d7 impact and mapped ' +
+        'to a concrete countermeasure. Evidence: 24 files (4.1 MiB), every artefact SHA-256 hashed, ' +
+        'dual session logs \u2014 a defensible chain from first packet to final report.</p>'
+    }
+  ];
+  var nodes = document.querySelectorAll('.tl-node');
+  var elPhase = document.getElementById('tlPhase');
+  var elTools = document.getElementById('tlTools');
+  var elBody = document.getElementById('tlBody');
+  function select(i) {
+    nodes.forEach(function (n, j) {
+      n.classList.toggle('active', i === j);
+      n.setAttribute('aria-selected', i === j ? 'true' : 'false');
+    });
+    elPhase.textContent = PHASES[i].name;
+    elTools.textContent = PHASES[i].tools;
+    elBody.innerHTML = PHASES[i].body;
+  }
+  nodes.forEach(function (n, i) {
+    n.addEventListener('click', function () { select(i); });
+  });
+  select(0);
 })();
 </script>
 </body>
