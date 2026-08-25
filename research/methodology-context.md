@@ -45,8 +45,7 @@ and critical national infrastructure**. Core characteristics:
 - Individual qualification is evidenced through NCSC-recognised certification bodies — **CREST**,
   **The Cyber Scheme**, and **TigerScheme** — whose practical exams gate CTM/CTL status. *Verify the
   current recognised bodies/exam names before citing.*
-- **Security clearance** is normally required because CHECK work touches government systems — which
-  is directly relevant to the portfolio's clearance differentiator.
+- **Security clearance** is normally required because CHECK work touches government systems.
 - Strong emphasis on **methodology rigour, scoping/authorisation, evidence handling, and reporting
   quality** — not just finding bugs.
 
